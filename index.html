@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kindred — Food & Symptom Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EAE3D1;
+    --paper-2:#E2D9C2;
+    --surface:#FCFAF3;
+    --surface-2:#F5F0E3;
+    --ink:#1E2A20;
+    --ink-soft:#5B6858;
+    --ink-faint:#8B9587;
+    --line:#D9CDAE;
+    --line-soft:#E4DAC0;
+    --moss:#5E7856;
+    --sage:#8CA37F;
+    --amber:#BE7A3C;
+    --rust:#9B4A38;
+    --gold:#A9863F;
+    --shadow-sm:0 1px 2px rgba(30,42,32,.06);
+    --shadow-md:0 6px 20px rgba(30,42,32,.08);
+    --shadow-lg:0 16px 44px rgba(30,42,32,.16);
+    --radius:16px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 8% -10%, rgba(255,255,255,.5), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(94,120,86,.08), transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif;font-weight:600;margin:0;color:var(--ink);}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .eyebrow{
+    font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--gold);font-weight:500;margin:0 0 6px;
+  }
+  ::selection{background:#D9C79A;}
+  a{color:inherit;}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 22px 100px;}
+
+  /* ---------- Header / brand ---------- */
+  header.top{
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:16px;
+    padding-bottom:22px;margin-bottom:30px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(155deg,#3A4C38,var(--ink));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow-sm);
+    flex:0 0 auto;
+  }
+  .brand-mark svg{width:19px;height:19px;}
+  .brand-text h1{font-size:23px;letter-spacing:-0.01em;line-height:1.1;}
+  .brand-text p{margin:3px 0 0;color:var(--ink-soft);font-size:13px;}
+
+  .top-actions{display:flex;align-items:center;gap:10px;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);
+    transition:border-color .15s, color .15s, transform .1s;
+  }
+  .icon-btn:hover{border-color:var(--moss);color:var(--ink);}
+  .icon-btn:active{transform:scale(.94);}
+  .icon-btn svg{width:16px;height:16px;}
+
+  .mode-switch{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;}
+  .mode-switch button{
+    border:none;background:transparent;padding:8px 14px;border-radius:9px;
+    font-family:'IBM Plex Sans';font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+    transition:background .15s, color .15s;white-space:nowrap;
+  }
+  .mode-switch button.active{background:var(--ink);color:var(--surface);box-shadow:var(--shadow-sm);}
+  .mode-switch button:not(.active):hover{color:var(--ink);}
+
+  /* ---------- Layout ---------- */
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start;}
+  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:var(--shadow-sm);
+  }
+  .panel + .panel{margin-top:18px;}
+  .panel h2{font-size:16.5px;margin-bottom:3px;}
+  .panel .panel-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;}
+
+  label{display:block;font-size:11.5px;font-weight:600;color:var(--ink-soft);margin:16px 0 7px;text-transform:uppercase;letter-spacing:.05em;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=password], input[type=datetime-local], textarea{
+    width:100%;border:1px solid var(--line);background:var(--surface-2);
+    border-radius:var(--radius-sm);padding:11px 13px;font-family:'IBM Plex Sans';font-size:14px;color:var(--ink);
+    transition:border-color .15s, background .15s;
+  }
+  input::placeholder, textarea::placeholder{color:var(--ink-faint);}
+  textarea{resize:vertical;min-height:58px;line-height:1.5;}
+  input:focus, textarea:focus, button:focus-visible, .chip:focus-visible{
+    outline:none;border-color:var(--moss);background:var(--surface);box-shadow:0 0 0 3px rgba(94,120,86,.15);
+  }
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{
+    border:1px solid var(--line);background:var(--surface-2);padding:7px 12px;border-radius:999px;
+    font-size:13px;cursor:pointer;color:var(--ink-soft);user-select:none;transition:all .12s;
+  }
+  .chip:hover{border-color:var(--moss);}
+  .chip.selected{background:var(--ink);color:var(--surface);border-color:var(--ink);}
+
+  .severity-row{display:flex;align-items:center;gap:13px;}
+  input[type=range]{
+    flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--line);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--amber);
+    box-shadow:var(--shadow-sm);cursor:pointer;border:2px solid var(--surface);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--amber);border:2px solid var(--surface);cursor:pointer;
+  }
+  .sev-badge{
+    min-width:38px;text-align:center;border-radius:9px;padding:6px 8px;font-size:13px;font-weight:600;
+    font-family:'IBM Plex Mono';color:var(--surface);transition:background .15s;
+  }
+
+  .btn-primary{
+    width:100%;margin-top:18px;background:var(--ink);color:var(--surface);border:none;
+    padding:13px;border-radius:11px;font-size:14.5px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans';
+    transition:background .15s, transform .08s;box-shadow:var(--shadow-sm);
+  }
+  .btn-primary:hover{background:#152018;}
+  .btn-primary:active{transform:scale(.99);}
+  .btn-ghost{
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);
+    padding:9px 14px;border-radius:10px;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans';
+    transition:all .15s;font-weight:500;
+  }
+  .btn-ghost:hover{border-color:var(--moss);color:var(--ink);}
+  .btn-text{background:none;border:none;color:var(--ink-faint);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;font-family:'IBM Plex Sans';}
+  .btn-text:hover{color:var(--rust);}
+
+  /* ---------- Ribbon ---------- */
+  .ribbon-scroll{overflow-x:auto;padding:4px 0 8px;}
+  .ribbon{display:flex;gap:7px;min-width:min-content;align-items:flex-end;}
+  .ribbon-day{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;flex:0 0 auto;width:32px;}
+  .ribbon-bar{width:13px;border-radius:5px;transition:opacity .15s, transform .12s;}
+  .ribbon-day:hover .ribbon-bar{opacity:.8;transform:scaleX(1.15);}
+  .ribbon-date{font-size:9px;color:var(--ink-faint);font-family:'IBM Plex Mono';writing-mode:vertical-rl;text-orientation:mixed;}
+
+  .empty{border:1.5px dashed var(--line);border-radius:var(--radius-sm);padding:38px 20px;text-align:center;color:var(--ink-soft);}
+  .empty h3{color:var(--ink);font-size:16px;margin-bottom:6px;}
+  .empty p{font-size:13px;margin:0;}
+
+  .day-group{margin-bottom:24px;}
+  .day-group-title{font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:11px;font-family:'IBM Plex Mono';text-transform:uppercase;letter-spacing:.04em;}
+
+  .card{
+    background:var(--surface-2);border:1px solid var(--line-soft);border-radius:13px;padding:15px 17px;margin-bottom:10px;
+    display:flex;gap:13px;align-items:stretch;transition:box-shadow .15s, transform .12s;
+  }
+  .card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+  .card-sev{flex:0 0 auto;width:6px;border-radius:4px;}
+  .card-body{flex:1;min-width:0;}
+  .card-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;}
+  .card-food{font-weight:600;font-size:15px;}
+  .card-time{font-size:11.5px;color:var(--ink-faint);font-family:'IBM Plex Mono';white-space:nowrap;}
+  .card-symptoms{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+  .tag{font-size:11px;background:var(--surface);border:1px solid var(--line);padding:3.5px 9px;border-radius:999px;color:var(--ink-soft);}
+  .card-notes{margin-top:9px;font-size:13px;color:var(--ink-soft);line-height:1.55;}
+  .card-del{border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:11.5px;align-self:flex-start;padding:2px;}
+  .card-del:hover{color:var(--rust);}
+
+  .patterns-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .patterns-table th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding-bottom:9px;border-bottom:1px solid var(--line-soft);}
+  .patterns-table td{padding:10px 0;border-bottom:1px solid var(--line-soft);}
+  .patterns-table tr:last-child td{border-bottom:none;}
+  .freq-bar-bg{background:var(--surface-2);border-radius:4px;height:6px;width:100%;overflow:hidden;border:1px solid var(--line-soft);}
+  .freq-bar{height:100%;border-radius:4px;}
+
+  .share-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .code-box{
+    font-family:'IBM Plex Mono';font-size:21px;letter-spacing:.14em;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:500;
+  }
+  .note-small{font-size:12px;color:var(--ink-faint);line-height:1.6;margin-top:11px;}
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--surface);
+    padding:11px 20px;border-radius:11px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
+    box-shadow:var(--shadow-lg);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Profile stat elements ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px;}
+  .stat-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:12px;padding:15px;text-align:center;}
+  .stat-num{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--ink);}
+  .stat-label{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+  .trend-box{display:flex;align-items:center;gap:15px;}
+  .trend-arrow{font-size:24px;font-family:'Fraunces',serif;flex:0 0 auto;}
+  .simple-list{display:flex;flex-direction:column;gap:8px;}
+  .simple-list .row{display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:10px 14px;font-size:13px;}
+  .simple-list .row .right{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-soft);}
+
+  /* ---------- Lock screen ---------- */
+  #lockScreen{
+    position:fixed;inset:0;z-index:100;
+    background:
+      radial-gradient(1200px 700px at 15% 0%, rgba(255,255,255,.5), transparent 55%),
+      radial-gradient(900px 600px at 100% 100%, rgba(94,120,86,.12), transparent 55%),
+      var(--paper);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .lock-card{
+    width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:20px;padding:36px 30px;box-shadow:var(--shadow-lg);text-align:center;
+  }
+  .lock-mark{
+    width:52px;height:52px;border-radius:15px;margin:0 auto 18px;
+    background:linear-gradient(155deg,#3A4C38,var(--ink));
+    display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);
+  }
+  .lock-mark svg{width:24px;height:24px;}
+  .lock-card h2{font-size:20px;margin-bottom:6px;}
+  .lock-card p.sub{font-size:13px;color:var(--ink-soft);margin:0 0 22px;line-height:1.5;}
+  .pin-dots{display:flex;gap:12px;justify-content:center;margin:0 0 20px;}
+  .pin-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface-2);transition:all .15s;}
+  .pin-dot.filled{background:var(--ink);border-color:var(--ink);}
+  .pin-dot.err{border-color:var(--rust);background:var(--rust);}
+  #pinHidden{position:absolute;opacity:0;pointer-events:none;}
+  .lock-error{font-size:12.5px;color:var(--rust);min-height:18px;margin-bottom:4px;}
+  .lock-links{display:flex;justify-content:center;gap:16px;margin-top:16px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOCK SCREEN ===================== -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0E3" stroke-width="1.6"><path d="M12 21s-7-4.4-9.3-9.1C1.2 8.6 3 5 6.6 5c1.9 0 3.3 1 4 2.3.9-1.3 2.2-2.3 4.1-2.3 3.6 0 5.4 3.6 3.9 6.9C19.3 16.6 12 21 12 21z"/></svg>
+    </div>
+    <h2 id="lockTitle">Welcome back</h2>
+    <p class="sub" id="lockSub">Enter your passcode to open your log.</p>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <input type="password" id="pinHidden" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off">
+    <div class="lock-error" id="lockError"></div>
+    <button class="btn-primary" id="pinConfirmBtn" style="margin-top:2px;">Continue</button>
+    <div class="lock-links">
+      <button class="btn-text" id="skipLockBtn">Skip for now</button>
+      <button class="btn-text" id="resetLockBtn" style="display:none;">Forgot passcode?</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div class="wrap" id="app" style="display:none;">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F5F0E3" stroke-width="1.6"><path d="M12 21s-7-4.4-9.3-9.1C1.2 8.6 3 5 6.6 5c1.9 0 3.3 1 4 2.3.9-1.3 2.2-2.3 4.1-2.3 3.6 0 5.4 3.6 3.9 6.9C19.3 16.6 12 21 12 21z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Kindred</h1>
+        <p>Your food & symptom log, in one quiet place.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="mode-switch">
+        <button id="modeMine" class="active">My log</button>
+        <button id="modeProfile">Profile</button>
+        <button id="modeShared">Shared code</button>
+      </div>
+      <button class="icon-btn" id="lockNowBtn" title="Lock now">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MY LOG VIEW -->
+  <div id="mineView">
+    <div class="layout">
+      <div>
+        <div class="panel" id="logPanel">
+          <p class="eyebrow">New entry</p>
+          <h2>Log what happened</h2>
+          <label for="foodInput">Food or drink</label>
+          <input type="text" id="foodInput" placeholder="e.g. oat milk latte, leftover pasta">
+
+          <label for="timeInput">When</label>
+          <input type="datetime-local" id="timeInput">
+
+          <label>Symptoms noticed</label>
+          <div class="chips" id="symptomChips"></div>
+
+          <label>Severity</label>
+          <div class="severity-row">
+            <input type="range" id="severityInput" min="1" max="5" value="1">
+            <span class="sev-badge mono" id="severityBadge">1</span>
+          </div>
+
+          <label for="notesInput">Notes (optional)</label>
+          <textarea id="notesInput" placeholder="Timing, what else was going on, anything that stood out"></textarea>
+
+          <button class="btn-primary" id="logBtn">Log entry</button>
+        </div>
+
+        <div class="panel">
+          <p class="eyebrow">Support team</p>
+          <h2>Share a read-only view</h2>
+          <p class="panel-sub">Generate a code. Anyone who has it can view your log — no account needed, so only give it to people you trust.</p>
+          <div class="share-row">
+            <button class="btn-ghost" id="shareToggleBtn">Turn on sharing</button>
+            <span id="shareCodeWrap" style="display:none;">
+              <span class="code-box mono" id="shareCodeText"></span>
+              <button class="btn-ghost" id="copyCodeBtn">Copy</button>
+            </span>
+          </div>
+          <p class="note-small" id="shareStatus"></p>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <p class="eyebrow">Overview</p>
+          <h2>Reaction ribbon</h2>
+          <p class="panel-sub">Tap a day to jump to it below.</p>
+          <div class="ribbon-scroll"><div class="ribbon" id="ribbon"></div></div>
+        </div>
+
+        <div class="panel">
+          <p class="eyebrow">History</p>
+          <h2>Timeline</h2>
+          <div id="timeline" style="margin-top:16px;"></div>
+        </div>
+
+        <div class="panel">
+          <p class="eyebrow">Repeats</p>
+          <h2>Patterns</h2>
+          <div id="patterns" style="margin-top:16px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE VIEW -->
+  <div id="profileView" style="display:none;">
+    <div class="panel">
+      <p class="eyebrow">At a glance</p>
+      <h2>Summary</h2>
+      <div id="profileStats" style="margin-top:16px;"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Direction</p>
+      <h2>Recent trend</h2>
+      <div id="profileTrend" style="margin-top:16px;"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Watch list</p>
+      <h2>Foods worth watching</h2>
+      <p class="panel-sub">Logged more than once, with the highest average severity.</p>
+      <div id="profileTriggers"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Reassurance</p>
+      <h2>Foods that tend to be fine</h2>
+      <p class="panel-sub">Logged more than once, with consistently low severity.</p>
+      <div id="profileSafe"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Frequency</p>
+      <h2>Most common symptoms</h2>
+      <div id="profileSymptoms" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- SHARED VIEW -->
+  <div id="sharedView" style="display:none;">
+    <div class="panel" style="max-width:420px;margin:0 auto 20px;">
+      <p class="eyebrow">Support team access</p>
+      <h2>Enter a share code</h2>
+      <label for="codeInput">6-character code</label>
+      <input type="text" id="codeInput" placeholder="e.g. 7F3KQ2" maxlength="6" style="text-transform:uppercase;letter-spacing:.15em;font-family:'IBM Plex Mono';">
+      <button class="btn-primary" id="loadCodeBtn">View log</button>
+      <p class="note-small" id="codeStatus"></p>
+    </div>
+    <div id="sharedContent" style="display:none;">
+      <div class="panel">
+        <p class="eyebrow">At a glance</p>
+        <h2>Profile summary</h2>
+        <div id="profileStatsShared" style="margin-top:16px;"></div>
+      </div>
+      <div class="panel">
+        <p class="eyebrow">Direction</p>
+        <h2>Recent trend</h2>
+        <div id="profileTrendShared" style="margin-top:16px;"></div>
+      </div>
+      <div class="panel">
+        <h2>Foods worth watching</h2>
+        <div id="profileTriggersShared" style="margin-top:14px;"></div>
+      </div>
+      <div class="panel">
+        <h2>Foods that tend to be fine</h2>
+        <div id="profileSafeShared" style="margin-top:14px;"></div>
+      </div>
+      <div class="panel">
+        <h2>Most common symptoms</h2>
+        <div id="profileSymptomsShared" style="margin-top:14px;"></div>
+      </div>
+      <div class="panel">
+        <h2>Reaction ribbon</h2>
+        <div class="ribbon-scroll"><div class="ribbon" id="ribbonShared"></div></div>
+      </div>
+      <div class="panel">
+        <h2>Timeline</h2>
+        <div id="timelineShared" style="margin-top:16px;"></div>
+      </div>
+      <div class="panel">
+        <h2>Patterns</h2>
+        <div id="patternsShared" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SYMPTOMS = ["Brain fog","Headache","Anxiety / irritability","Fatigue","Dizziness","Racing heart","Nausea","Sleep disturbance","Other"];
+let selectedSymptoms = new Set();
+let entries = [];
+let shareEnabled = false;
+let shareCode = null;
+
+/* ---------------- helpers ---------------- */
+function sevColor(s){
+  if(s<=2) return getComputedStyle(document.documentElement).getPropertyValue('--sage');
+  if(s===3) return getComputedStyle(document.documentElement).getPropertyValue('--amber');
+  return getComputedStyle(document.documentElement).getPropertyValue('--rust');
+}
+function fmtDate(d){ return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+function fmtTime(d){ return new Date(d).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }
+function dayKey(d){ const dt=new Date(d); return dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate(); }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function genCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c=''; for(let i=0;i<6;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function escapeHtml(str){ const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML; }
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ---------------- storage ---------------- */
+async function loadPersonal(){
+  try{
+    const res = await window.storage.get('food-log-entries', false);
+    entries = res ? JSON.parse(res.value) : [];
+  }catch(e){ entries = []; }
+  try{
+    const res = await window.storage.get('food-log-settings', false);
+    if(res){ const s=JSON.parse(res.value); shareEnabled=!!s.shareEnabled; shareCode=s.shareCode||null; }
+  }catch(e){}
+}
+async function savePersonal(){
+  try{ await window.storage.set('food-log-entries', JSON.stringify(entries), false); }
+  catch(e){ toast('Could not save — try again'); }
+  if(shareEnabled && shareCode){
+    try{ await window.storage.set('shared-log:'+shareCode, JSON.stringify(entries), true); }catch(e){}
+  }
+}
+async function saveSettings(){
+  try{ await window.storage.set('food-log-settings', JSON.stringify({shareEnabled, shareCode}), false); }catch(e){}
+}
+
+/* ---------------- lock screen ---------------- */
+let pinBuffer = '';
+let pinHash = null;
+let pinMode = 'checking'; // checking | setup | unlock
+
+function renderPinDots(){
+  const dots = document.querySelectorAll('.pin-dot');
+  dots.forEach((d,i)=>{ d.classList.toggle('filled', i < pinBuffer.length); d.classList.remove('err'); });
+}
+function shakeError(msg){
+  document.getElementById('lockError').textContent = msg;
+  document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('err'));
+  setTimeout(()=>{ pinBuffer=''; renderPinDots(); }, 500);
+}
+document.getElementById('pinHidden').addEventListener('input', (e)=>{
+  pinBuffer = e.target.value.replace(/\D/g,'').slice(0,6);
+  renderPinDots();
+});
+document.getElementById('lockScreen').addEventListener('click', ()=> document.getElementById('pinHidden').focus());
+
+async function handlePinConfirm(){
+  if(pinBuffer.length < 4){ shakeError('Use at least 4 digits.'); return; }
+  if(pinMode==='setup'){
+    if(!window._pendingPin){
+      window._pendingPin = pinBuffer;
+      pinBuffer=''; document.getElementById('pinHidden').value='';
+      document.getElementById('lockTitle').textContent = 'Confirm passcode';
+      document.getElementById('lockSub').textContent = 'Enter it once more.';
+      document.getElementById('lockError').textContent='';
+      renderPinDots();
+      return;
+    }
+    if(pinBuffer !== window._pendingPin){
+      shakeError("Those didn't match — try again.");
+      window._pendingPin = null;
+      document.getElementById('lockTitle').textContent = 'Set a passcode';
+      document.getElementById('lockSub').textContent = 'Protect your log if someone else uses this device.';
+      return;
+    }
+    pinHash = await sha256(pinBuffer);
+    try{ await window.storage.set('food-log-pin', pinHash, false); }catch(e){}
+    unlockApp();
+    toast('Passcode set');
+    return;
+  }
+  // unlock mode
+  const hash = await sha256(pinBuffer);
+  if(hash === pinHash){ unlockApp(); }
+  else{ shakeError('Incorrect passcode.'); document.getElementById('pinHidden').value=''; }
+}
+document.getElementById('pinConfirmBtn').addEventListener('click', handlePinConfirm);
+document.getElementById('pinHidden').addEventListener('keydown', (e)=>{ if(e.key==='Enter') handlePinConfirm(); });
+
+document.getElementById('skipLockBtn').addEventListener('click', ()=>{ unlockApp(); });
+
+document.getElementById('resetLockBtn').addEventListener('click', async ()=>{
+  if(!confirm('This clears your passcode so you can set a new one. Your logged entries are not affected. Continue?')) return;
+  try{ await window.storage.delete('food-log-pin', false); }catch(e){}
+  pinHash=null; pinBuffer=''; window._pendingPin=null;
+  pinMode='setup';
+  document.getElementById('lockTitle').textContent='Set a passcode';
+  document.getElementById('lockSub').textContent='Protect your log if someone else uses this device.';
+  document.getElementById('resetLockBtn').style.display='none';
+  document.getElementById('lockError').textContent='';
+  document.getElementById('pinHidden').value='';
+  renderPinDots();
+});
+
+document.getElementById('lockNowBtn').addEventListener('click', ()=>{
+  if(!pinHash){ toast('Set a passcode first to enable locking'); return; }
+  document.getElementById('app').style.display='none';
+  document.getElementById('lockScreen').style.display='flex';
+  pinMode='unlock'; pinBuffer='';
+  document.getElementById('pinHidden').value='';
+  document.getElementById('lockTitle').textContent='Locked';
+  document.getElementById('lockSub').textContent='Enter your passcode to open your log.';
+  document.getElementById('resetLockBtn').style.display='inline';
+  renderPinDots();
+  setTimeout(()=>document.getElementById('pinHidden').focus(), 50);
+});
+
+function unlockApp(){
+  document.getElementById('lockScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+async function initLock(){
+  try{
+    const res = await window.storage.get('food-log-pin', false);
+    if(res && res.value){
+      pinHash = res.value;
+      pinMode='unlock';
+      document.getElementById('lockTitle').textContent='Welcome back';
+      document.getElementById('lockSub').textContent='Enter your passcode to open your log.';
+      document.getElementById('resetLockBtn').style.display='inline';
+    }else{
+      pinMode='setup';
+      document.getElementById('lockTitle').textContent='Set a passcode';
+      document.getElementById('lockSub').textContent='Protect your log if someone else uses this device. This stays on this device only.';
+    }
+  }catch(e){
+    pinMode='setup';
+    document.getElementById('lockTitle').textContent='Set a passcode';
+    document.getElementById('lockSub').textContent='Protect your log if someone else uses this device.';
+  }
+  renderPinDots();
+  setTimeout(()=>document.getElementById('pinHidden').focus(), 50);
+}
+
+/* ---------------- symptom chips ---------------- */
+function renderChips(){
+  const wrap = document.getElementById('symptomChips');
+  wrap.innerHTML='';
+  SYMPTOMS.forEach(s=>{
+    const el = document.createElement('div');
+    el.className = 'chip' + (selectedSymptoms.has(s) ? ' selected' : '');
+    el.textContent = s;
+    el.tabIndex = 0;
+    el.onclick = ()=>{ selectedSymptoms.has(s) ? selectedSymptoms.delete(s) : selectedSymptoms.add(s); renderChips(); };
+    el.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.onclick(); } };
+    wrap.appendChild(el);
+  });
+}
+
+/* ---------------- rendering: log ---------------- */
+function groupByDay(list){
+  const groups={};
+  list.forEach(e=>{ const k=dayKey(e.time); (groups[k] ||= []).push(e); });
+  return groups;
+}
+
+function renderRibbon(list, elId){
+  const el = document.getElementById(elId);
+  el.innerHTML='';
+  const groups = groupByDay(list);
+  const days = Object.keys(groups).sort((a,b)=> new Date(a)-new Date(b));
+  if(days.length===0){ el.innerHTML='<span style="font-size:13px;color:var(--ink-faint);">No entries yet</span>'; return; }
+  days.forEach(k=>{
+    const dayEntries = groups[k];
+    const maxSev = Math.max(...dayEntries.map(e=>e.severity));
+    const day = document.createElement('div'); day.className='ribbon-day';
+    const bar = document.createElement('div'); bar.className='ribbon-bar';
+    bar.style.height=(14+maxSev*10)+'px'; bar.style.background=sevColor(maxSev);
+    const label = document.createElement('div'); label.className='ribbon-date'; label.textContent=fmtDate(dayEntries[0].time);
+    day.appendChild(bar); day.appendChild(label);
+    day.onclick = ()=>{
+      const suffix = elId==='ribbonShared' ? '-shared' : '';
+      document.getElementById('day-'+k+suffix)?.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    el.appendChild(day);
+  });
+}
+
+function renderTimeline(list, elId, editable){
+  const el = document.getElementById(elId);
+  el.innerHTML='';
+  if(list.length===0){
+    el.innerHTML='<div class="empty"><h3>No entries yet</h3><p>Once you log something, it will show up here.</p></div>';
+    return;
+  }
+  const groups = groupByDay(list);
+  const days = Object.keys(groups).sort((a,b)=> new Date(b)-new Date(a));
+  days.forEach(k=>{
+    const dayEntries = groups[k].sort((a,b)=> new Date(b.time)-new Date(a.time));
+    const groupEl = document.createElement('div'); groupEl.className='day-group';
+    groupEl.id = 'day-'+k+(editable?'':'-shared');
+    const title = document.createElement('div'); title.className='day-group-title'; title.textContent=fmtDate(dayEntries[0].time);
+    groupEl.appendChild(title);
+    dayEntries.forEach(e=>{
+      const card = document.createElement('div'); card.className='card';
+      const sevBar = document.createElement('div'); sevBar.className='card-sev'; sevBar.style.background=sevColor(e.severity);
+      card.appendChild(sevBar);
+      const body = document.createElement('div'); body.className='card-body';
+      body.innerHTML = `
+        <div class="card-top">
+          <span class="card-food">${escapeHtml(e.food)}</span>
+          <span class="card-time">${fmtTime(e.time)} · severity ${e.severity}</span>
+        </div>
+        <div class="card-symptoms">${(e.symptoms||[]).map(s=>`<span class="tag">${escapeHtml(s)}</span>`).join('')}</div>
+        ${e.notes ? `<div class="card-notes">${escapeHtml(e.notes)}</div>` : ''}`;
+      card.appendChild(body);
+      if(editable){
+        const del = document.createElement('button'); del.className='card-del'; del.textContent='Delete';
+        del.onclick = async ()=>{ entries = entries.filter(x=>x.id!==e.id); await savePersonal(); renderAll(); };
+        card.appendChild(del);
+      }
+      groupEl.appendChild(card);
+    });
+    el.appendChild(groupEl);
+  });
+}
+
+function renderPatterns(list, elId){
+  const el = document.getElementById(elId);
+  el.innerHTML='';
+  if(list.length===0){ el.innerHTML='<p style="font-size:13px;color:var(--ink-faint);">Patterns will appear once you have a few entries logged.</p>'; return; }
+  const counts={};
+  list.forEach(e=>{
+    const key=e.food.trim().toLowerCase();
+    (counts[key] ||= {food:e.food,count:0,totalSev:0});
+    counts[key].count++; counts[key].totalSev+=e.severity;
+  });
+  const rows = Object.values(counts).filter(r=>r.count>1)
+    .sort((a,b)=> (b.totalSev/b.count)-(a.totalSev/a.count)).slice(0,8);
+  if(rows.length===0){ el.innerHTML='<p style="font-size:13px;color:var(--ink-faint);">No repeated foods yet — patterns show up once something appears more than once.</p>'; return; }
+  const maxAvg = Math.max(...rows.map(r=>r.totalSev/r.count));
+  const table = document.createElement('table'); table.className='patterns-table';
+  table.innerHTML = `<thead><tr><th>Food</th><th>Times logged</th><th>Avg. severity</th></tr></thead>`;
+  const tbody = document.createElement('tbody');
+  rows.forEach(r=>{
+    const avg = r.totalSev/r.count;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(r.food)}</td>
+      <td class="mono">${r.count}</td>
+      <td><div style="display:flex;align-items:center;gap:9px;">
+        <span class="mono" style="width:26px;">${avg.toFixed(1)}</span>
+        <div class="freq-bar-bg"><div class="freq-bar" style="width:${(avg/maxAvg*100)}%;background:${sevColor(Math.round(avg))}"></div></div>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody); el.appendChild(table);
+}
+
+/* ---------------- rendering: profile ---------------- */
+function computeProfile(list){
+  if(list.length===0) return null;
+  const days = new Set(list.map(e=>dayKey(e.time))).size;
+  const sorted = [...list].sort((a,b)=> new Date(a.time)-new Date(b.time));
+  const first = sorted[0].time, last = sorted[sorted.length-1].time;
+
+  const foodStats={};
+  list.forEach(e=>{
+    const key=e.food.trim().toLowerCase();
+    (foodStats[key] ||= {food:e.food,count:0,totalSev:0});
+    foodStats[key].count++; foodStats[key].totalSev+=e.severity;
+  });
+  const repeated = Object.values(foodStats).filter(r=>r.count>1).map(r=>({...r, avg:r.totalSev/r.count}));
+  const triggers = [...repeated].sort((a,b)=>b.avg-a.avg).slice(0,6);
+  const safe = [...repeated].filter(r=>r.avg<=2).sort((a,b)=>b.count-a.count).slice(0,6);
+
+  const symptomCounts={};
+  list.forEach(e=>(e.symptoms||[]).forEach(s=>{ symptomCounts[s]=(symptomCounts[s]||0)+1; }));
+  const symptoms = Object.entries(symptomCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  const now=new Date();
+  const weekAgo=new Date(now-7*24*60*60*1000);
+  const twoWeeksAgo=new Date(now-14*24*60*60*1000);
+  const recent=list.filter(e=>new Date(e.time)>=weekAgo);
+  const prior=list.filter(e=>new Date(e.time)>=twoWeeksAgo && new Date(e.time)<weekAgo);
+  const avg=arr=>arr.length? arr.reduce((s,e)=>s+e.severity,0)/arr.length : null;
+
+  return {totalEntries:list.length, days, first, last, triggers, safe, symptoms,
+    recentAvg:avg(recent), priorAvg:avg(prior), recentCount:recent.length, priorCount:prior.length};
+}
+
+function renderProfile(list, ids){
+  const p = computeProfile(list);
+  const statsEl=document.getElementById(ids.stats), trendEl=document.getElementById(ids.trend),
+        trigEl=document.getElementById(ids.triggers), safeEl=document.getElementById(ids.safe),
+        sympEl=document.getElementById(ids.symptoms);
+
+  if(!p){
+    statsEl.innerHTML='<div class="empty"><h3>Nothing to summarize yet</h3><p>Log a few entries and this page fills in on its own.</p></div>';
+    trendEl.innerHTML=''; trigEl.innerHTML=''; safeEl.innerHTML=''; sympEl.innerHTML='';
+    return;
+  }
+
+  statsEl.innerHTML = `<div class="stat-grid">
+    <div class="stat-box"><div class="stat-num mono">${p.totalEntries}</div><div class="stat-label">Entries logged</div></div>
+    <div class="stat-box"><div class="stat-num mono">${p.days}</div><div class="stat-label">Days tracked</div></div>
+    <div class="stat-box"><div class="stat-num mono">${fmtDate(p.first)}</div><div class="stat-label">First entry</div></div>
+    <div class="stat-box"><div class="stat-num mono">${fmtDate(p.last)}</div><div class="stat-label">Most recent</div></div>
+  </div>`;
+
+  if(p.recentAvg===null){
+    trendEl.innerHTML='<p style="font-size:13px;color:var(--ink-faint);">Keep logging — trend needs at least a week of entries.</p>';
+  } else if(p.priorAvg===null){
+    trendEl.innerHTML=`<div class="trend-box"><span class="trend-arrow">—</span><span style="font-size:13px;color:var(--ink-soft);">Average severity this week: <strong class="mono">${p.recentAvg.toFixed(1)}</strong> across ${p.recentCount} ${p.recentCount===1?'entry':'entries'}. One more week of data will show a trend.</span></div>`;
+  } else {
+    const diff=p.recentAvg-p.priorAvg;
+    let arrow='→', word='holding steady', color='var(--ink-soft)';
+    if(diff<=-0.3){ arrow='↓'; word='trending down (fewer/milder reactions)'; color='var(--sage)'; }
+    else if(diff>=0.3){ arrow='↑'; word='trending up (more/stronger reactions)'; color='var(--rust)'; }
+    trendEl.innerHTML=`<div class="trend-box"><span class="trend-arrow" style="color:${color}">${arrow}</span><span style="font-size:13px;color:var(--ink-soft);">This week's average severity is <strong class="mono">${p.recentAvg.toFixed(1)}</strong>, vs <strong class="mono">${p.priorAvg.toFixed(1)}</strong> the week before — ${word}.</span></div>`;
+  }
+
+  trigEl.innerHTML = p.triggers.length ? `<div class="simple-list">${p.triggers.map(t=>`
+    <div class="row"><span>${escapeHtml(t.food)}</span><span class="right">avg ${t.avg.toFixed(1)} · ${t.count}×</span></div>`).join('')}</div>`
+    : '<p style="font-size:13px;color:var(--ink-faint);">No repeated foods with notable severity yet.</p>';
+
+  safeEl.innerHTML = p.safe.length ? `<div class="simple-list">${p.safe.map(t=>`
+    <div class="row"><span>${escapeHtml(t.food)}</span><span class="right">avg ${t.avg.toFixed(1)} · ${t.count}×</span></div>`).join('')}</div>`
+    : '<p style="font-size:13px;color:var(--ink-faint);">Not enough repeated low-severity foods yet.</p>';
+
+  sympEl.innerHTML = p.symptoms.length ? `<div class="simple-list">${p.symptoms.map(([s,c])=>`
+    <div class="row"><span>${escapeHtml(s)}</span><span class="right">${c}×</span></div>`).join('')}</div>`
+    : '<p style="font-size:13px;color:var(--ink-faint);">No symptoms logged yet.</p>';
+}
+
+function renderAll(){
+  renderRibbon(entries, 'ribbon');
+  renderTimeline(entries, 'timeline', true);
+  renderPatterns(entries, 'patterns');
+  renderProfile(entries, {stats:'profileStats', trend:'profileTrend', triggers:'profileTriggers', safe:'profileSafe', symptoms:'profileSymptoms'});
+}
+
+/* ---------------- events: log form ---------------- */
+document.getElementById('severityInput').addEventListener('input', (e)=>{
+  const badge=document.getElementById('severityBadge');
+  badge.textContent=e.target.value;
+  badge.style.background=sevColor(parseInt(e.target.value));
+});
+
+document.getElementById('logBtn').addEventListener('click', async ()=>{
+  const food=document.getElementById('foodInput').value.trim();
+  const timeVal=document.getElementById('timeInput').value;
+  const notes=document.getElementById('notesInput').value.trim();
+  const severity=parseInt(document.getElementById('severityInput').value);
+  if(!food){ toast('Add what you ate or drank first'); return; }
+
+  entries.push({
+    id:uid(), food,
+    time: timeVal ? new Date(timeVal).toISOString() : new Date().toISOString(),
+    symptoms: Array.from(selectedSymptoms), severity, notes
+  });
+  await savePersonal();
+
+  document.getElementById('foodInput').value='';
+  document.getElementById('notesInput').value='';
+  document.getElementById('timeInput').value='';
+  document.getElementById('severityInput').value=1;
+  document.getElementById('severityBadge').textContent='1';
+  document.getElementById('severityBadge').style.background=sevColor(1);
+  selectedSymptoms.clear(); renderChips();
+  renderAll();
+  toast('Entry logged');
+});
+
+document.getElementById('shareToggleBtn').addEventListener('click', async ()=>{
+  if(!shareEnabled){
+    shareEnabled=true; shareCode=shareCode||genCode();
+    await saveSettings(); await savePersonal();
+    document.getElementById('shareToggleBtn').textContent='Turn off sharing';
+    document.getElementById('shareCodeWrap').style.display='inline-flex';
+    document.getElementById('shareCodeText').textContent=shareCode;
+    document.getElementById('shareStatus').textContent='Sharing is on. Anyone with this code can view your log.';
+  } else {
+    shareEnabled=false; await saveSettings();
+    document.getElementById('shareToggleBtn').textContent='Turn on sharing';
+    document.getElementById('shareCodeWrap').style.display='none';
+    document.getElementById('shareStatus').textContent='Sharing is off. Your log is private again.';
+  }
+});
+document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(shareCode).then(()=>toast('Code copied'));
+});
+
+/* ---------------- mode switch ---------------- */
+function setMode(mode){
+  const views={mine:'mineView', profile:'profileView', shared:'sharedView'};
+  const btns={mine:'modeMine', profile:'modeProfile', shared:'modeShared'};
+  Object.keys(views).forEach(k=>{
+    document.getElementById(views[k]).style.display = (k===mode) ? 'block' : 'none';
+    document.getElementById(btns[k]).classList.toggle('active', k===mode);
+  });
+}
+document.getElementById('modeMine').addEventListener('click', ()=> setMode('mine'));
+document.getElementById('modeProfile').addEventListener('click', ()=>{
+  renderProfile(entries, {stats:'profileStats', trend:'profileTrend', triggers:'profileTriggers', safe:'profileSafe', symptoms:'profileSymptoms'});
+  setMode('profile');
+});
+document.getElementById('modeShared').addEventListener('click', ()=> setMode('shared'));
+
+document.getElementById('loadCodeBtn').addEventListener('click', async ()=>{
+  const code=document.getElementById('codeInput').value.trim().toUpperCase();
+  const statusEl=document.getElementById('codeStatus');
+  if(code.length!==6){ statusEl.textContent='Enter the full 6-character code.'; return; }
+  statusEl.textContent='Looking up code…';
+  try{
+    const res = await window.storage.get('shared-log:'+code, true);
+    if(!res){ statusEl.textContent='No log found for that code.'; return; }
+    const list = JSON.parse(res.value);
+    statusEl.textContent='';
+    document.getElementById('sharedContent').style.display='block';
+    renderProfile(list, {stats:'profileStatsShared', trend:'profileTrendShared', triggers:'profileTriggersShared', safe:'profileSafeShared', symptoms:'profileSymptomsShared'});
+    renderRibbon(list, 'ribbonShared');
+    renderTimeline(list, 'timelineShared', false);
+    renderPatterns(list, 'patternsShared');
+  }catch(e){ statusEl.textContent='No log found for that code.'; }
+});
+
+/* ---------------- init ---------------- */
+(async function init(){
+  renderChips();
+  await loadPersonal();
+  if(shareEnabled && shareCode){
+    document.getElementById('shareToggleBtn').textContent='Turn off sharing';
+    document.getElementById('shareCodeWrap').style.display='inline-flex';
+    document.getElementById('shareCodeText').textContent=shareCode;
+    document.getElementById('shareStatus').textContent='Sharing is on. Anyone with this code can view your log.';
+  }
+  renderAll();
+  await initLock();
+})();
+</script>
+</body>
+</html>
